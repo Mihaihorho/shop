@@ -1,5 +1,6 @@
 package com.example.shop.service;
 
+import com.example.shop.exception.ProductNotFoundException;
 import com.example.shop.model.Product;
 import com.example.shop.repository.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,7 @@ public class ProductService {
     }
 
     public Product findProduct(Long id) {
-        return productRepository.findById(id).orElse(null);
+        return productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
     }
 
     public List<Product> getAllProducts() {
@@ -25,32 +26,26 @@ public class ProductService {
     }
 
     public Product updateProduct(Long id, Product product) {
-        Product existingProduct = productRepository.findById(id).orElse(null);
-        if (existingProduct != null) {
-            existingProduct.setName(product.getName());
-            existingProduct.setPrice(product.getPrice());
-            existingProduct.setStock(product.getStock());
-            return productRepository.save(existingProduct);
-        }
-        return null;
+        Product existingProduct = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
+
+        existingProduct.setName(product.getName());
+        existingProduct.setPrice(product.getPrice());
+        existingProduct.setStock(product.getStock());
+        return productRepository.save(existingProduct);
     }
 
     public Product updateProductName(Long id, String newName) {
-        Product existingProduct = productRepository.findById(id).orElse(null);
-        if (existingProduct != null) {
-            existingProduct.setName(newName);
-            return productRepository.save(existingProduct);
-        }
-        return null;
+        Product existingProduct = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
+
+        existingProduct.setName(newName);
+        return productRepository.save(existingProduct);
     }
 
     public Product updateProductPrice(Long id, double newPrice) {
-        Product existingProduct = productRepository.findById(id).orElse(null);
-        if (existingProduct != null) {
-            existingProduct.setPrice(newPrice);
-            return productRepository.save(existingProduct);
-        }
-        return null;
+        Product existingProduct = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
+
+        existingProduct.setPrice(newPrice);
+        return productRepository.save(existingProduct);
     }
 
     public void deleteProduct(Long id) {

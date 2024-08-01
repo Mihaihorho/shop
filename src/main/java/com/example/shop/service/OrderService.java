@@ -1,5 +1,9 @@
 package com.example.shop.service;
 
+import com.example.shop.exception.InsufficientStockException;
+import com.example.shop.exception.OrderNotFoundException;
+import com.example.shop.exception.OrderNotInProgressException;
+import com.example.shop.exception.ProductNotFoundException;
 import com.example.shop.model.Order;
 import com.example.shop.model.Order.Status;
 import com.example.shop.model.Product;
@@ -17,10 +21,10 @@ public class OrderService {
     @Autowired
     private ProductRepository productRepository;
 
-    public Order addOrder(Order order) throws Exception {
-        Product product = productRepository.findById(order.getProductId()).orElseThrow(() -> new Exception("Product not found"));
+    public Order addOrder(Order order) {
+        Product product = productRepository.findById(order.getProductId()).orElseThrow(() -> new ProductNotFoundException(order.getProductId()));
         if (product.getStock() < order.getQuantity()) {
-            throw new Exception("Insufficient stock");
+            throw new InsufficientStockException();
         }
 
         product.setStock(product.getStock() - order.getQuantity());
@@ -31,17 +35,16 @@ public class OrderService {
     }
 
     public Order findOrder(Long id) {
-        return orderRepository.findById(id).orElse(null);
+        return orderRepository.findById(id).orElseThrow(() -> new OrderNotFoundException(id));
     }
 
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
     }
 
-    public Order completeOrder(Long id) throws Exception {
-        Order order = orderRepository.findById(id).orElseThrow(() -> new Exception("Order not found"));
-        if (Status.IN_PROGRESS != order.getStatus())
-            throw new Exception("Order must be in progress");
+    public Order completeOrder(Long id) {
+        Order order = orderRepository.findById(id).orElseThrow(() -> new OrderNotFoundException(id));
+        if (Status.IN_PROGRESS != order.getStatus()) throw new OrderNotInProgressException(id);
         order.setStatus(Status.COMPLETED);
         return orderRepository.save(order);
     }
@@ -50,11 +53,10 @@ public class OrderService {
         orderRepository.deleteById(id);
     }
 
-    public Order cancelOrder(Long id) throws Exception {
-        Order order = orderRepository.findById(id).orElseThrow(() -> new Exception("Order not found"));
-        if (Status.IN_PROGRESS != order.getStatus())
-            throw new Exception("Order must be in progress");
-        Product product = productRepository.findById(order.getProductId()).orElseThrow(() -> new Exception("Product not found"));
+    public Order cancelOrder(Long id) {
+        Order order = orderRepository.findById(id).orElseThrow(() -> new OrderNotFoundException(id));
+        if (Status.IN_PROGRESS != order.getStatus()) throw new OrderNotInProgressException(id);
+        Product product = productRepository.findById(order.getProductId()).orElseThrow(() -> new ProductNotFoundException(order.getProductId()));
 
         product.setStock(product.getStock() + order.getQuantity());
         productRepository.save(product);

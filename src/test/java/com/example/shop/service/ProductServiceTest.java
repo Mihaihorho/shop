@@ -1,5 +1,6 @@
 package com.example.shop.service;
 
+import com.example.shop.exception.ProductNotFoundException;
 import com.example.shop.model.Product;
 import com.example.shop.repository.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,7 +15,12 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class ProductServiceTest {
     @Mock
@@ -60,6 +66,17 @@ public class ProductServiceTest {
     }
 
     @Test
+    public void testFindProductNotFound() {
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ProductNotFoundException.class, () -> {
+            productService.findProduct(1L);
+        });
+
+        verify(productRepository, times(1)).findById(1L);
+    }
+
+    @Test
     public void testGetAllProducts() {
         List<Product> products = Arrays.asList(product, new Product());
         when(productRepository.findAll()).thenReturn(products);
@@ -92,6 +109,24 @@ public class ProductServiceTest {
     }
 
     @Test
+    public void testUpdateProductNotFound() {
+        Product updatedProduct = new Product();
+        updatedProduct.setId(1L);
+        updatedProduct.setName("Updated Product");
+        updatedProduct.setPrice(20.0);
+        updatedProduct.setStock(50);
+
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ProductNotFoundException.class, () -> {
+            productService.updateProduct(1L, updatedProduct);
+        });
+
+        verify(productRepository, times(1)).findById(1L);
+        verify(productRepository, times(0)).save(any(Product.class));
+    }
+
+    @Test
     public void testDeleteProduct() {
         doNothing().when(productRepository).deleteById(1L);
 
@@ -115,6 +150,19 @@ public class ProductServiceTest {
     }
 
     @Test
+    public void testUpdateProductPriceNotFound() {
+        double newPrice = 15.0;
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ProductNotFoundException.class, () -> {
+            productService.updateProductPrice(1L, newPrice);
+        });
+
+        verify(productRepository, times(1)).findById(1L);
+        verify(productRepository, times(0)).save(any(Product.class));
+    }
+
+    @Test
     public void testUpdateProductName() {
         String newName = "Test";
         when(productRepository.findById(1L)).thenReturn(Optional.of(product));
@@ -126,5 +174,18 @@ public class ProductServiceTest {
 
         verify(productRepository, times(1)).findById(1L);
         verify(productRepository, times(1)).save(any(Product.class));
+    }
+
+    @Test
+    public void testUpdateProductNameNotFound() {
+        String newName = "Test";
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ProductNotFoundException.class, () -> {
+            productService.updateProductName(1L, newName);
+        });
+
+        verify(productRepository, times(1)).findById(1L);
+        verify(productRepository, times(0)).save(any(Product.class));
     }
 }

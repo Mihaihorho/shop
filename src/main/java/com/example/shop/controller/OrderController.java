@@ -3,7 +3,14 @@ package com.example.shop.controller;
 import com.example.shop.model.Order;
 import com.example.shop.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -15,11 +22,7 @@ public class OrderController {
 
     @PostMapping
     public Order addOrder(@RequestBody Order order) {
-        try {
-            return orderService.addOrder(order);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
+        return orderService.addOrder(order);
     }
 
     @GetMapping("/{id}")
@@ -34,11 +37,7 @@ public class OrderController {
 
     @PutMapping("/{id}/complete")
     public Order completeOrder(@PathVariable("id") Long id) {
-        try {
-            return orderService.completeOrder(id);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
+        return orderService.completeOrder(id);
     }
 
     @DeleteMapping("/{id}")
@@ -48,10 +47,6 @@ public class OrderController {
 
     @DeleteMapping("/{id}/cancel")
     public Order cancelOrder(@PathVariable("id") Long id) {
-        try {
-            return orderService.cancelOrder(id);
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        }
+        return orderService.cancelOrder(id);
     }
 }

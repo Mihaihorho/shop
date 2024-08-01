@@ -1,5 +1,9 @@
 package com.example.shop.service;
 
+import com.example.shop.exception.InsufficientStockException;
+import com.example.shop.exception.OrderNotFoundException;
+import com.example.shop.exception.OrderNotInProgressException;
+import com.example.shop.exception.ProductNotFoundException;
 import com.example.shop.model.Order;
 import com.example.shop.model.Order.Status;
 import com.example.shop.model.Product;
@@ -15,8 +19,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class OrderServiceTest {
 
@@ -50,7 +60,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void testAddOrder_success() throws Exception {
+    public void testAddOrder_success() {
         when(productRepository.findById(order.getProductId())).thenReturn(Optional.of(product));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
 
@@ -68,8 +78,9 @@ public class OrderServiceTest {
     public void testAddOrder_productNotFound() {
         when(productRepository.findById(order.getProductId())).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(Exception.class, () -> orderService.addOrder(order));
-        assertEquals("Product not found", exception.getMessage());
+        assertThrows(ProductNotFoundException.class, () -> {
+            orderService.addOrder(order);
+        });
 
         verify(productRepository, times(1)).findById(order.getProductId());
         verify(orderRepository, times(0)).save(any(Order.class));
@@ -80,8 +91,9 @@ public class OrderServiceTest {
         product.setStock(5);
         when(productRepository.findById(order.getProductId())).thenReturn(Optional.of(product));
 
-        Exception exception = assertThrows(Exception.class, () -> orderService.addOrder(order));
-        assertEquals("Insufficient stock", exception.getMessage());
+        assertThrows(InsufficientStockException.class, () -> {
+            orderService.addOrder(order);
+        });
 
         verify(productRepository, times(1)).findById(order.getProductId());
         verify(orderRepository, times(0)).save(any(Order.class));
@@ -99,6 +111,17 @@ public class OrderServiceTest {
     }
 
     @Test
+    public void testFindOrderNotFound() {
+        when(orderRepository.findById(order.getId())).thenReturn(Optional.empty());
+
+        assertThrows(OrderNotFoundException.class, () -> {
+            orderService.findOrder(order.getId());
+        });
+
+        verify(orderRepository, times(1)).findById(order.getId());
+    }
+
+    @Test
     public void testGetAllOrders() {
         List<Order> orders = Arrays.asList(order, new Order());
         when(orderRepository.findAll()).thenReturn(orders);
@@ -111,7 +134,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void testCompleteOrder_success() throws Exception {
+    public void testCompleteOrder_success() {
         order.setStatus(Status.IN_PROGRESS);
         when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
         when(orderRepository.save(any(Order.class))).thenReturn(order);
@@ -128,8 +151,9 @@ public class OrderServiceTest {
     public void testCompleteOrder_orderNotFound() {
         when(orderRepository.findById(order.getId())).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(Exception.class, () -> orderService.completeOrder(order.getId()));
-        assertEquals("Order not found", exception.getMessage());
+        assertThrows(OrderNotFoundException.class, () -> {
+            orderService.completeOrder(order.getId());
+        });
 
         verify(orderRepository, times(1)).findById(order.getId());
         verify(orderRepository, times(0)).save(any(Order.class));
@@ -140,8 +164,9 @@ public class OrderServiceTest {
         order.setStatus(Status.CANCELLED);
         when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
 
-        Exception exception = assertThrows(Exception.class, () -> orderService.completeOrder(order.getId()));
-        assertEquals("Order must be in progress", exception.getMessage());
+        assertThrows(OrderNotInProgressException.class, () -> {
+            orderService.completeOrder(order.getId());
+        });
 
         verify(orderRepository, times(1)).findById(order.getId());
         verify(orderRepository, times(0)).save(any(Order.class));
@@ -157,7 +182,7 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void testCancelOrder_success() throws Exception {
+    public void testCancelOrder_success() {
         order.setStatus(Status.IN_PROGRESS);
         when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
         when(productRepository.findById(order.getProductId())).thenReturn(Optional.of(product));
@@ -178,8 +203,9 @@ public class OrderServiceTest {
     public void testCancelOrder_orderNotFound() {
         when(orderRepository.findById(order.getId())).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(Exception.class, () -> orderService.cancelOrder(order.getId()));
-        assertEquals("Order not found", exception.getMessage());
+        assertThrows(OrderNotFoundException.class, () -> {
+            orderService.cancelOrder(order.getId());
+        });
 
         verify(orderRepository, times(1)).findById(order.getId());
         verify(orderRepository, times(0)).save(any(Order.class));
@@ -192,12 +218,28 @@ public class OrderServiceTest {
         order.setStatus(Status.COMPLETED);
         when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
 
-        Exception exception = assertThrows(Exception.class, () -> orderService.cancelOrder(order.getId()));
-        assertEquals("Order must be in progress", exception.getMessage());
+        assertThrows(OrderNotInProgressException.class, () -> {
+            orderService.cancelOrder(order.getId());
+        });
 
         verify(orderRepository, times(1)).findById(order.getId());
         verify(orderRepository, times(0)).save(any(Order.class));
         verify(productRepository, times(0)).findById(order.getProductId());
+        verify(productRepository, times(0)).save(any(Product.class));
+    }
+
+    @Test
+    public void testCancelOrder_productNotFound() {
+        order.setProductId(2L);
+        when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
+
+        assertThrows(ProductNotFoundException.class, () -> {
+            orderService.cancelOrder(order.getId());
+        });
+
+        verify(orderRepository, times(1)).findById(order.getId());
+        verify(orderRepository, times(0)).save(any(Order.class));
+        verify(productRepository, times(1)).findById(order.getProductId());
         verify(productRepository, times(0)).save(any(Product.class));
     }
 }
