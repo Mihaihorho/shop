@@ -58,7 +58,7 @@ public class Order {
 
     @Override
     public String toString() {
-        return "Order{" + "id=" + id + ", productId=" + productId + ", quantity=" + quantity + ", status=" + status + '}';
+        return "Order {" + "id=" + id + ", productId=" + productId + ", quantity=" + quantity + ", status=" + status + '}';
     }
 
     public enum Status {
