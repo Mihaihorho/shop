@@ -127,12 +127,25 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void testDeleteProduct() {
+    public void testDeleteProduct_Success() {
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
         doNothing().when(productRepository).deleteById(1L);
 
         productService.deleteProduct(1L);
 
+        verify(productRepository, times(1)).findById(1L);
         verify(productRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    public void testDeleteProductNotFound() {
+        doNothing().when(productRepository).deleteById(1L);
+
+        assertThrows(ProductNotFoundException.class, () -> {
+            productService.deleteProduct(1L);
+        });
+
+        verify(productRepository, times(1)).findById(1L);
     }
 
     @Test
@@ -156,6 +169,33 @@ public class ProductServiceTest {
 
         assertThrows(ProductNotFoundException.class, () -> {
             productService.updateProductPrice(1L, newPrice);
+        });
+
+        verify(productRepository, times(1)).findById(1L);
+        verify(productRepository, times(0)).save(any(Product.class));
+    }
+
+    @Test
+    public void testUpdateProductStock() {
+        Integer newStock = 200;
+        when(productRepository.findById(1L)).thenReturn(Optional.of(product));
+        when(productRepository.save(any(Product.class))).thenReturn(product);
+
+        Product result = productService.updateProductStock(1L, newStock);
+        assertNotNull(result);
+        assertEquals(newStock, result.getStock());
+
+        verify(productRepository, times(1)).findById(1L);
+        verify(productRepository, times(1)).save(any(Product.class));
+    }
+
+    @Test
+    public void testUpdateProductStockNotFound() {
+        Integer newStock = 200;
+        when(productRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ProductNotFoundException.class, () -> {
+            productService.updateProductPrice(1L, newStock);
         });
 
         verify(productRepository, times(1)).findById(1L);

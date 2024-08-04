@@ -59,8 +59,18 @@ public class ProductService {
         return productRepository.save(existingProduct);
     }
 
+    public Product updateProductStock(Long id, Integer newStock) {
+        log.info("Updating the stock of the product with Id: {}", id);
+        Product existingProduct = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
+
+        existingProduct.setStock(newStock);
+        return productRepository.save(existingProduct);
+    }
+
     public void deleteProduct(Long id) {
         log.info("Deleting product with Id: {}", id);
+        productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
+
         productRepository.deleteById(id);
     }
 }

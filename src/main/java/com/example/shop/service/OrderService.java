@@ -60,6 +60,8 @@ public class OrderService {
 
     public void deleteOrder(Long id) {
         log.info("Deleting order with Id: {}", id);
+        orderRepository.findById(id).orElseThrow(() -> new OrderNotFoundException(id));
+
         orderRepository.deleteById(id);
     }
 

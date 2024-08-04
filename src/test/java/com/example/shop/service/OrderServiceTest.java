@@ -173,12 +173,25 @@ public class OrderServiceTest {
     }
 
     @Test
-    public void testDeleteOrder() {
+    public void testDeleteOrder_Success() {
+        when(orderRepository.findById(order.getId())).thenReturn(Optional.of(order));
         doNothing().when(orderRepository).deleteById(order.getId());
 
         orderService.deleteOrder(order.getId());
 
+        verify(orderRepository, times(1)).findById(order.getId());
         verify(orderRepository, times(1)).deleteById(order.getId());
+    }
+
+    @Test
+    public void testDeleteOrderNotFound() {
+        doNothing().when(orderRepository).deleteById(order.getId());
+
+        assertThrows(OrderNotFoundException.class, () -> {
+            orderService.deleteOrder(order.getId());
+        });
+
+        verify(orderRepository, times(1)).findById(order.getId());
     }
 
     @Test

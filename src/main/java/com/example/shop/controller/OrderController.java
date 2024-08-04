@@ -7,6 +7,7 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,6 +35,7 @@ public class OrderController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'WRITE')")
     public ResponseEntity<?> addOrder(@RequestBody Order order) {
         EntityModel<Order> entityModel = assembler.toModel(orderService.addOrder(order));
         return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
@@ -41,12 +43,14 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'READ', 'WRITE')")
     public EntityModel<Order> findOrder(@PathVariable("id") Long id) {
         Order order = orderService.findOrder(id);
         return assembler.toModel(order);
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'READ', 'WRITE')")
     public CollectionModel<EntityModel<Order>> getAllOrders() {
         List<EntityModel<Order>> orders = orderService.getAllOrders().stream()
                 .map(assembler::toModel)
@@ -55,6 +59,7 @@ public class OrderController {
     }
 
     @PutMapping("/{id}/complete")
+    @PreAuthorize("hasAnyRole('ADMIN', 'WRITE')")
     public ResponseEntity<?> completeOrder(@PathVariable("id") Long id) {
         EntityModel<Order> entityModel = assembler.toModel(orderService.completeOrder(id));
         return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
@@ -62,12 +67,14 @@ public class OrderController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteOrder(@PathVariable("id") Long id) {
         orderService.deleteOrder(id);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}/cancel")
+    @PreAuthorize("hasAnyRole('ADMIN', 'WRITE')")
     public ResponseEntity<?> cancelOrder(@PathVariable("id") Long id) {
         EntityModel<Order> entityModel = assembler.toModel(orderService.cancelOrder(id));
         return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())

@@ -1,12 +1,13 @@
 # Shop Management API
 
 This is a Spring Boot based backend application for managing a shop. 
-It provides an API for managing products and orders.
+It provides a role-based API with basic authentication for managing products and orders.
 
 ## Features
 
 - Add, find, update, and delete products.
 - Add, find, complete, cancel, and delete orders.
+- Add users with roles
 - Unit tests for service layer.
 
 ## Technologies Used
@@ -29,6 +30,26 @@ It provides an API for managing products and orders.
 
 ## API Endpoints
 
+Default user with ADMIN rights is "admin" with the password "admin"
+
+### Users
+
+- `POST /users`: Add a new user
+    - Body example:
+      {
+      "username": "test",
+      "password": "test",
+      "role": "READ"
+      }
+
+#### Possible Roles: READ, WRITE, ADMIN
+
+Note - all requests are based on roles:
+
+- `GET`: ADMIN, READ, WRITE
+- `POST`, `PUT`: ADMIN, WRITE
+- `DELETE`, `POST` (users): ADMIN
+
 ### Products
 
 - `GET /products`: Get all products
@@ -49,13 +70,14 @@ It provides an API for managing products and orders.
     }
 - `PUT /products/{id}/name?newName=<Name>`: Update a product name by ID
 - `PUT /products/{id}/price?newPrice=<Price>`: Update a product price by ID
+- `PUT /products/{id}/stock?newStock=<Stock>`: Update a product stock by ID
 - `DELETE /products/{id}`: Delete a product by ID
 
 ### Orders
 
 - `GET /orders`: Get all orders
-- `GET /orders/{id}`: Get an orders by ID
-- `POST /orders`: Add a new orders
+- `GET /orders/{id}`: Get an order by ID
+- `POST /orders`: Add a new order
   - Body example:
     {
         "productId": 1,
@@ -63,4 +85,4 @@ It provides an API for managing products and orders.
     }
 - `PUT /orders/{id}/complete`: Update an order as completed by ID
 - `DELETE /orders/{id}/cancel`: Update an order as cancelled by ID
-- `DELETE /orders/{id}`: Delete a product by ID
+- `DELETE /orders/{id}`: Delete an order by ID
